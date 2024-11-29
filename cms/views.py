@@ -56,14 +56,28 @@ class PortfolioListCreateView(generics.ListCreateAPIView):
         if tags:
             try:
                 tags = json.loads(tags)
-            except:
-                tags = []
+                # Convert all IDs to integers, skip any invalid ones
+                tag_ids = []
+                for tag_id in tags:
+                    try:
+                        tag_ids.append(int(tag_id))
+                    except (ValueError, TypeError):
+                        continue
+            except json.JSONDecodeError:
+                tag_ids = []
                 
         if services:
             try:
                 services = json.loads(services)
-            except:
-                services = []
+                # Convert all IDs to integers, skip any invalid ones
+                service_ids = []
+                for service_id in services:
+                    try:
+                        service_ids.append(int(service_id))
+                    except (ValueError, TypeError):
+                        continue
+            except json.JSONDecodeError:
+                service_ids = []
 
         # Handle thumbnail
         thumbnail = self.request.FILES.get('thumbnail')
@@ -77,9 +91,9 @@ class PortfolioListCreateView(generics.ListCreateAPIView):
         )
         
         if tags:
-            instance.tags.set(tags)
+            instance.tags.set(tag_ids)
         if services:
-            instance.services.set(services)
+            instance.services.set(service_ids)
 
 class PortfolioRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Portfolio.objects.all().select_related('category').prefetch_related('tags', 'services')
@@ -91,17 +105,22 @@ class PortfolioRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         tags = self.request.data.get('tags')
         services = self.request.data.get('services')
         
+        tag_ids = []
+        service_ids = []
+        
         if tags:
             try:
-                tags = json.loads(tags)
-            except:
-                tags = []
+                tags_data = json.loads(tags)
+                tag_ids = [int(tag_id) for tag_id in tags_data if str(tag_id).isdigit()]
+            except (json.JSONDecodeError, ValueError, TypeError):
+                tag_ids = []
                 
         if services:
             try:
-                services = json.loads(services)
-            except:
-                services = []
+                services_data = json.loads(services)
+                service_ids = [int(service_id) for service_id in services_data if str(service_id).isdigit()]
+            except (json.JSONDecodeError, ValueError, TypeError):
+                service_ids = []
 
         # Handle thumbnail
         thumbnail = self.request.FILES.get('thumbnail')
@@ -111,10 +130,10 @@ class PortfolioRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
             category_id=self.request.data.get('category')
         )
         
-        if tags:
-            instance.tags.set(tags)
-        if services:
-            instance.services.set(services)
+        if tag_ids:
+            instance.tags.set(tag_ids)
+        if service_ids:
+            instance.services.set(service_ids)
 
 class BlogListCreateView(generics.ListCreateAPIView):
     queryset = Blog.objects.all().select_related('category').prefetch_related('tags')

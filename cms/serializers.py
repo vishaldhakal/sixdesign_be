@@ -18,6 +18,7 @@ class ServiceSerializer(serializers.ModelSerializer):
 
 class PortfolioListSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
+    tags = TagSerializer(many=True, read_only=True)
     
     class Meta:
         model = Portfolio

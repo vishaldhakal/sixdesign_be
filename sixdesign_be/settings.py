@@ -208,3 +208,5 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB

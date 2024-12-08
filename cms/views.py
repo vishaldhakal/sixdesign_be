@@ -8,6 +8,9 @@ from .serializers import (
     BlogListSerializer, BlogDetailSerializer, TestimonialSerializer
 )
 import json
+from django.http import HttpResponse
+from django.core.mail import EmailMessage
+from rest_framework.decorators import api_view
 
 # Create your views here.
 
@@ -192,3 +195,26 @@ class TestimonialRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
     queryset = Testimonial.objects.all()
     serializer_class = TestimonialSerializer
     lookup_field = 'id'
+
+
+@api_view(["POST"])
+def ContactFormSubmission(request):
+    if request.method == "POST":
+        subject = "Inquiry - SixDesign"
+        emaill = "SixDesign <info@sixdesign.ca>"
+        headers = {'Reply-To': request.POST["email"]}
+
+        name = request.POST["name"]
+        email = request.POST["email"]
+        phone = request.POST["phone"]
+        message = request.POST["message"]
+
+        body = f"Name: {name}\nEmail: {email}\nPhone: {phone}\nMessage: {message}\n"
+
+        email = EmailMessage(subject, body, emaill, ["team@sixdesign.ca"],reply_to=[email], headers=headers)
+
+        email.send(fail_silently=False)
+        
+        return HttpResponse("Success")
+    else:
+        return HttpResponse("Not a POST request")

@@ -27,4 +27,7 @@ urlpatterns = [
     # Testimonial URLs
     path('testimonials/', views.TestimonialListCreateView.as_view(), name='testimonial-list-create'),
     path('testimonials/<int:id>/', views.TestimonialRetrieveUpdateDestroyView.as_view(), name='testimonial-detail'),
+
+    # Contact Form Submission
+    path('contact-form-submit/', views.ContactFormSubmission, name='contact-form-submission'),
 ] 

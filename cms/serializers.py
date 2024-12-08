@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Tag, Service, Portfolio, Blog
+from .models import Category, Tag, Service, Portfolio, Blog, Testimonial
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -75,3 +75,8 @@ class BlogDetailSerializer(serializers.ModelSerializer):
         if 'thumbnail' in validated_data and not validated_data['thumbnail']:
             validated_data.pop('thumbnail')
         return super().update(instance, validated_data) 
+    
+class TestimonialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Testimonial
+        fields = '__all__'

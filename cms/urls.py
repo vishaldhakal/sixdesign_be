@@ -23,4 +23,8 @@ urlpatterns = [
     # Blog URLs
     path('blogs/', views.BlogListCreateView.as_view(), name='blog-list-create'),
     path('blogs/<slug:slug>/', views.BlogRetrieveUpdateDestroyView.as_view(), name='blog-detail'),
+
+    # Testimonial URLs
+    path('testimonials/', views.TestimonialListCreateView.as_view(), name='testimonial-list-create'),
+    path('testimonials/<int:id>/', views.TestimonialRetrieveUpdateDestroyView.as_view(), name='testimonial-detail'),
 ] 

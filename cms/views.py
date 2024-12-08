@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from .models import Category, Tag, Service, Portfolio, Blog
+from .models import Category, Tag, Service, Portfolio, Blog, Testimonial
 from .serializers import (
     CategorySerializer, TagSerializer, ServiceSerializer,
     PortfolioListSerializer, PortfolioDetailSerializer,
-    BlogListSerializer, BlogDetailSerializer
+    BlogListSerializer, BlogDetailSerializer, TestimonialSerializer
 )
 import json
 
@@ -183,3 +183,12 @@ class BlogRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         
         if tags:
             instance.tags.set(tags)
+
+class TestimonialListCreateView(generics.ListCreateAPIView):
+    queryset = Testimonial.objects.all()
+    serializer_class = TestimonialSerializer
+
+class TestimonialRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Testimonial.objects.all()
+    serializer_class = TestimonialSerializer
+    lookup_field = 'id'

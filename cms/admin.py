@@ -1,7 +1,8 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
-from .models import Category, Tag, Service, Portfolio, Blog
-
+from .models import Category, Tag, Service, Portfolio, Blog, Testimonial
+from tinymce.widgets import TinyMCE
+from django.db import models
 @admin.register(Category)
 class CategoryAdmin(ModelAdmin):
     list_display = ['name']
@@ -33,3 +34,12 @@ class BlogAdmin(ModelAdmin):
     prepopulated_fields = {'slug': ('title',)}
     filter_horizontal = ['tags']
     date_hierarchy = 'created_at'
+
+@admin.register(Testimonial)
+class TestimonialAdmin(ModelAdmin):
+    list_display = ['name', 'created_at']
+    search_fields = ['name', 'description']
+    date_hierarchy = 'created_at'
+    formfield_overrides = {
+        models.TextField: {'widget': TinyMCE()},
+    }

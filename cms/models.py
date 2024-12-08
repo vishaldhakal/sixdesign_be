@@ -1,9 +1,10 @@
 from django.db import models
 from django.utils.text import slugify
 
+
 class Category(models.Model):
     name = models.CharField(max_length=255)
-    
+
     class Meta:
         verbose_name_plural = "Categories"
 
@@ -17,12 +18,14 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+
 class Service(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
+
 
 class Portfolio(models.Model):
     name = models.CharField(max_length=255)
@@ -63,3 +66,17 @@ class Blog(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Testimonial(models.Model):
+    name = models.CharField(max_length=255)
+    position = models.CharField(max_length=255, blank=True, null=True)
+    title = models.CharField(max_length=255, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    avatar = models.FileField(blank=True, null=True)
+    rating = models.IntegerField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name

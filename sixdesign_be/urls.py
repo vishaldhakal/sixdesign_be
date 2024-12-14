@@ -10,6 +10,7 @@ urlpatterns = [
     path('api/', include('expense.urls')),
     path('api/cms/', include('cms.urls')),
     path('tinymce/', include('tinymce.urls')),
+    path('api/outreach/', include('outreach.urls')),
 ]
 
 if settings.DEBUG:

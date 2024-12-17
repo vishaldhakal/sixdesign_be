@@ -2,13 +2,14 @@ from django.shortcuts import render
 from rest_framework import viewsets, generics, permissions, filters
 from rest_framework.parsers import MultiPartParser, FormParser
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Sum
+from django.db.models import Sum, Max, Min
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Expense, ExpenseCategory
 from .serializers import ExpenseSerializer, ExpenseCategorySerializer
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth, TruncYear, TruncWeek, ExtractWeek, ExtractYear
 from django.utils import timezone
+from datetime import timedelta, datetime, date
 
 # Create your views here.
 
@@ -44,6 +45,27 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     def summary(self, request):
         queryset = self.get_queryset()
         
+        # Get current date (without time)
+        current_date = timezone.now().date()
+        
+        # Calculate start dates for different periods
+        week_start = current_date - timedelta(days=current_date.weekday())
+        
+        # Calculate expenses for different time periods
+        weekly_expense = queryset.filter(
+            expense_date__gte=week_start,
+            expense_date__lte=current_date
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        monthly_expense = queryset.filter(
+            expense_date__year=current_date.year,
+            expense_date__month=current_date.month
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        yearly_expense = queryset.filter(
+            expense_date__year=current_date.year
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
         # Total expenses
         total_expenses = queryset.aggregate(total=Sum('amount'))['total'] or 0
 
@@ -52,15 +74,12 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             total=Sum('amount')
         ).order_by('-total')
 
-        # Monthly expenses for the current year
-        current_year = timezone.now().year
-        monthly_expenses = queryset.filter(
-            expense_date__year=current_year
-        ).annotate(
+        # Monthly expenses for all time
+        monthly_expenses = queryset.annotate(
             month=TruncMonth('expense_date')
         ).values('month').annotate(
             total=Sum('amount')
-        ).order_by('month')
+        ).order_by('-month')  # Order by most recent month first
 
         # Recent expenses
         recent_expenses = ExpenseSerializer(
@@ -71,6 +90,11 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         return Response({
             'total_expenses': total_expenses,
             'by_category': by_category,
+            'stats': {
+                'week': weekly_expense,
+                'month': monthly_expense,
+                'year': yearly_expense
+            },
             'monthly_expenses': monthly_expenses,
             'recent_expenses': recent_expenses
         })

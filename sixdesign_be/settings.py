@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'cms',
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
-    'outreach'
+    'outreach',
+    'django_filters'
 ]
 
 MIDDLEWARE = [
@@ -87,7 +88,6 @@ WSGI_APPLICATION = 'sixdesign_be.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # } 
-
 
 DATABASES = {
     'default': {
@@ -154,6 +154,11 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
 }
 
 SIMPLE_JWT = {

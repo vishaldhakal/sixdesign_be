@@ -27,6 +27,18 @@ class Expense(models.Model):
         blank=True,
         null=True
     )
+    receipt2 = models.FileField(
+        blank=True,
+        null=True
+    )
+    receipt3 = models.FileField(
+        blank=True,
+        null=True
+    )
+    receipt4 = models.FileField(
+        blank=True,
+        null=True
+    )
     expense_date = models.DateField(default=timezone.now)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

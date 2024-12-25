@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.utils import timezone
 
+
 class Website(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, null=True)
@@ -145,28 +146,32 @@ class Website(models.Model):
     def __str__(self):
         return self.name
 
+
 class Tag(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
 
+
 class People(models.Model):
     STAGE_CHOICES = [
-        ('Contact', 'Contact'),
-        ('Buyer', 'Buyer'),
-        ('Lead', 'Lead'),
-        ('Nurture', 'Nurture'),
-        ('Closed', 'Closed'),
-        ('Past Client', 'Past Client'),
-        ('Sphere', 'Sphere'),
-        ('Trash', 'Trash'),
+        ("Contact", "Contact"),
+        ("Buyer", "Buyer"),
+        ("Lead", "Lead"),
+        ("Nurture", "Nurture"),
+        ("Closed", "Closed"),
+        ("Past Client", "Past Client"),
+        ("Sphere", "Sphere"),
+        ("Trash", "Trash"),
     ]
     name = models.CharField(max_length=100)
     email = models.EmailField(max_length=100)
     phone = models.CharField(max_length=100)
     last_activity = models.DateTimeField(blank=True, null=True)
-    stage = models.CharField(max_length=100, blank=True, null=True, choices=STAGE_CHOICES)
+    stage = models.CharField(
+        max_length=100, blank=True, null=True, choices=STAGE_CHOICES
+    )
     source = models.CharField(max_length=100, blank=True, null=True)
     source_url = models.URLField(blank=True, null=True)
     tags = models.ManyToManyField(Tag, blank=True)
@@ -183,20 +188,21 @@ class People(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['visitor_id']),
-            models.Index(fields=['email']),
+            models.Index(fields=["visitor_id"]),
+            models.Index(fields=["email"]),
         ]
+
 
 class Activity(models.Model):
     ACTIVITY_TYPE_CHOICES = [
-        ('Viewed Page', 'Viewed Page'),
-        ('Form Submission', 'Form Submission'),
-        ('Heartbeat', 'Heartbeat'),
-        ('Inquiry', 'Inquiry'),
+        ("Viewed Page", "Viewed Page"),
+        ("Form Submission", "Form Submission"),
+        ("Heartbeat", "Heartbeat"),
+        ("Inquiry", "Inquiry"),
     ]
-        
+
     website = models.ForeignKey(Website, on_delete=models.CASCADE)
-    people = models.ForeignKey('People', on_delete=models.CASCADE)
+    people = models.ForeignKey("People", on_delete=models.CASCADE)
     activity_type = models.CharField(max_length=100, choices=ACTIVITY_TYPE_CHOICES)
     message = models.TextField(blank=True, null=True)
     page_title = models.CharField(max_length=255, blank=True, null=True)
@@ -214,10 +220,10 @@ class Activity(models.Model):
     last_heartbeat = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-occured_at']
+        ordering = ["-occured_at"]
         indexes = [
-            models.Index(fields=['visitor_id']),
-            models.Index(fields=['occured_at']),
+            models.Index(fields=["visitor_id"]),
+            models.Index(fields=["occured_at"]),
         ]
 
     def __str__(self):

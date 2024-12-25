@@ -39,6 +39,7 @@ class Expense(models.Model):
         blank=True,
         null=True
     )
+    hst = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     expense_date = models.DateField(default=timezone.now)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

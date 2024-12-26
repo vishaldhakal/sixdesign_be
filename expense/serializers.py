@@ -10,7 +10,6 @@ class ExpenseCategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ExpenseAuditLogSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
     expense_title = serializers.CharField(source='expense.title', read_only=True)
     expense_amount = serializers.DecimalField(
         source='expense.amount',
@@ -23,8 +22,7 @@ class ExpenseAuditLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExpenseAuditLog
         fields = [
-            'id', 'expense', 'expense_title', 'expense_amount',
-            'user', 'action', 'action_display', 'changes',
+            'id', 'expense', 'expense_title', 'expense_amount','action', 'action_display', 'changes',
             'timestamp', 'ip_address'
         ]
         read_only_fields = fields

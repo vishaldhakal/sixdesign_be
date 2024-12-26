@@ -91,7 +91,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         )
         return super().retrieve(request, *args, **kwargs)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], url_path='my-activity', url_name='my-activity')
     def my_activity(self, request):
         """
         Get all expense-related activities for the current user

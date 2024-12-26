@@ -102,6 +102,47 @@ class Expense(models.Model):
         
         # If updating, get original state
         if not is_new:
-            old_instance = Expense.objects.get(pk=self.pk)
-            
+            try:
+                old_instance = Expense.objects.get(pk=self.pk)
+                old_data = {
+                    'title': old_instance.title,
+                    'amount': str(old_instance.amount),
+                    'category': old_instance.category_id,
+                    'description': old_instance.description,
+                    'expense_date': str(old_instance.expense_date),
+                }
+            except Expense.DoesNotExist:
+                old_data = {}
+        
+        # Save the instance
         super().save(*args, **kwargs)
+        
+        # Get current data
+        current_data = {
+            'title': self.title,
+            'amount': str(self.amount),
+            'category': self.category_id,
+            'description': self.description,
+            'expense_date': str(self.expense_date),
+        }
+        
+        # If this is a new instance, log creation
+        if is_new and hasattr(self, 'created_by'):
+            self.log_action(
+                user=self.created_by,
+                action='CREATE',
+                changes=None
+            )
+        # If this is an update, log changes
+        elif not is_new and hasattr(self, 'created_by'):
+            changes = {
+                field: {'old': old_data[field], 'new': current_data[field]}
+                for field in current_data
+                if field in old_data and old_data[field] != current_data[field]
+            }
+            if changes:  # Only log if there were actual changes
+                self.log_action(
+                    user=self.created_by,
+                    action='UPDATE',
+                    changes=changes
+                )

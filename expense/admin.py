@@ -1,29 +1,40 @@
 from django.contrib import admin
+from .models import Expense, ExpenseCategory, ExpenseAuditLog
+from django.utils.html import format_html
 from unfold.admin import ModelAdmin
-from .models import Expense, ExpenseCategory
 
-@admin.register(ExpenseCategory)
-class ExpenseCategoryAdmin(ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name', 'description')
+@admin.register(ExpenseAuditLog)
+class ExpenseAuditLogAdmin(ModelAdmin):
+    list_display = ['expense', 'user', 'action', 'timestamp', 'ip_address']
+    list_filter = ['action', 'timestamp', 'user']
+    search_fields = ['expense__title', 'user__email']
+    readonly_fields = ['expense', 'user', 'action', 'changes', 'timestamp', 'ip_address']
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
 
 @admin.register(Expense)
 class ExpenseAdmin(ModelAdmin):
-    list_display = ('title', 'amount', 'category', 'expense_date', 'created_by')
-    list_filter = ('category', 'expense_date', 'created_by')
-    search_fields = ('title', 'description')
-    date_hierarchy = 'expense_date'
-    readonly_fields = ('created_at', 'updated_at')
+    list_display = ['title', 'amount', 'category', 'expense_date', 'created_by']
+    list_filter = ['category', 'expense_date', 'created_by']
+    search_fields = ['title', 'description']
+    readonly_fields = ['created_by', 'created_at', 'updated_at']
     
-    fieldsets = (
-        ('Basic Information', {
-            'fields': ('title', 'amount', 'category', 'expense_date')
-        }),
-        ('Details', {
-            'fields': ('description', 'receipt')
-        }),
-        ('System Fields', {
-            'fields': ('created_by', 'created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
+    def save_model(self, request, obj, form, change):
+        if not change:  # If creating new object
+            obj.created_by = request.user
+        obj.save()
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser:
+            return qs.filter(created_by=request.user)
+        return qs
+
+@admin.register(ExpenseCategory)
+class ExpenseCategoryAdmin(ModelAdmin):
+    list_display = ['name', 'description']
+    search_fields = ['name']

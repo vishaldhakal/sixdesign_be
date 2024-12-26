@@ -46,33 +46,9 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         expense = serializer.save(created_by=self.request.user)
-        expense.log_action(
-            user=self.request.user,
-            action='CREATE',
-            ip_address=self.get_client_ip()
-        )
 
     def perform_update(self, serializer):
-        # Get the old instance data
-        old_data = ExpenseSerializer(self.get_object()).data
-        # Save the new instance
-        expense = serializer.save()
-        # Get the new instance data
-        new_data = ExpenseSerializer(expense).data
-        
-        # Calculate changes
-        changes = {
-            field: {'old': old_data[field], 'new': new_data[field]}
-            for field in new_data
-            if field in old_data and old_data[field] != new_data[field]
-        }
-        
-        expense.log_action(
-            user=self.request.user,
-            action='UPDATE',
-            changes=changes,
-            ip_address=self.get_client_ip()
-        )
+        instance = serializer.save()
 
     def perform_destroy(self, instance):
         instance.log_action(

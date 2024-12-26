@@ -5,8 +5,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Sum, Max, Min
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from .models import Expense, ExpenseCategory
-from .serializers import ExpenseSerializer, ExpenseCategorySerializer
+from .models import Expense, ExpenseCategory, ExpenseAuditLog
+from .serializers import ExpenseSerializer, ExpenseCategorySerializer, ExpenseAuditLogSerializer
 from django.db.models.functions import TruncMonth, TruncYear, TruncWeek, ExtractWeek, ExtractYear
 from django.utils import timezone
 from datetime import timedelta, datetime, date
@@ -36,10 +36,83 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     ordering_fields = ['expense_date', 'amount', 'created_at']
 
     def get_queryset(self):
-        return Expense.objects.all()
+        return Expense.objects.filter(created_by=self.request.user)
+
+    def get_client_ip(self):
+        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return self.request.META.get('REMOTE_ADDR')
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        expense = serializer.save(created_by=self.request.user)
+        expense.log_action(
+            user=self.request.user,
+            action='CREATE',
+            ip_address=self.get_client_ip()
+        )
+
+    def perform_update(self, serializer):
+        # Get the old instance data
+        old_data = ExpenseSerializer(self.get_object()).data
+        # Save the new instance
+        expense = serializer.save()
+        # Get the new instance data
+        new_data = ExpenseSerializer(expense).data
+        
+        # Calculate changes
+        changes = {
+            field: {'old': old_data[field], 'new': new_data[field]}
+            for field in new_data
+            if field in old_data and old_data[field] != new_data[field]
+        }
+        
+        expense.log_action(
+            user=self.request.user,
+            action='UPDATE',
+            changes=changes,
+            ip_address=self.get_client_ip()
+        )
+
+    def perform_destroy(self, instance):
+        instance.log_action(
+            user=self.request.user,
+            action='DELETE',
+            ip_address=self.get_client_ip()
+        )
+        instance.delete()
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.log_action(
+            user=request.user,
+            action='VIEW',
+            ip_address=self.get_client_ip()
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'])
+    def my_activity(self, request):
+        """
+        Get all expense-related activities for the current user
+        """
+        audit_logs = ExpenseAuditLog.objects.filter(
+            user=request.user
+        ).select_related('expense', 'user').order_by('-timestamp')
+        
+        serializer = ExpenseAuditLogSerializer(audit_logs, many=True)
+        
+        # Group activities by date
+        activities = {}
+        for log in serializer.data:
+            date = log['timestamp'].split('T')[0]
+            if date not in activities:
+                activities[date] = []
+            activities[date].append(log)
+        
+        return Response({
+            'activities': activities
+        })
 
     @action(detail=False, methods=['get'])
     def summary(self, request):

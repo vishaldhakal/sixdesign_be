@@ -66,7 +66,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         """
         audit_logs = ExpenseAuditLog.objects.filter(
             user=request.user
-        ).select_related('expense', 'user').order_by('-timestamp')
+        ).select_related('user').order_by('-timestamp')
         
         serializer = ExpenseAuditLogSerializer(audit_logs, many=True)
         

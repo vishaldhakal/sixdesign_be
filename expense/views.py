@@ -54,18 +54,10 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         instance.log_action(
             user=self.request.user,
             action='DELETE',
+            changes={'deleted_at': timezone.now().isoformat()},
             ip_address=self.get_client_ip()
         )
         instance.delete()
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.log_action(
-            user=request.user,
-            action='VIEW',
-            ip_address=self.get_client_ip()
-        )
-        return super().retrieve(request, *args, **kwargs)
 
     @action(detail=False, methods=['get'], url_path='my-activity', url_name='my-activity')
     def my_activity(self, request):

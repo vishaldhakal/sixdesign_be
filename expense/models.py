@@ -19,14 +19,10 @@ class ExpenseAuditLog(models.Model):
         ('CREATE', 'Created'),
         ('UPDATE', 'Updated'),
         ('DELETE', 'Deleted'),
-        ('VIEW', 'Viewed'),
     ]
 
-    expense = models.ForeignKey(
-        'Expense',
-        on_delete=models.CASCADE,
-        related_name='audit_logs'
-    )
+    expense_id = models.IntegerField()  # Store expense ID separately
+    expense_title = models.CharField(max_length=200)  # Store expense title separately
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -41,7 +37,7 @@ class ExpenseAuditLog(models.Model):
         ordering = ['-timestamp']
 
     def __str__(self):
-        return f"{self.user} {self.action} expense {self.expense} at {self.timestamp}"
+        return f"{self.user} {self.action} expense {self.expense_title} at {self.timestamp}"
 
 class Expense(models.Model):
     title = models.CharField(max_length=200)
@@ -89,7 +85,8 @@ class Expense(models.Model):
         Log an action performed on this expense
         """
         return ExpenseAuditLog.objects.create(
-            expense=self,
+            expense_id=self.id,
+            expense_title=self.title,
             user=user,
             action=action,
             changes=changes,

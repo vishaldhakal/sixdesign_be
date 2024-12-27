@@ -5,10 +5,10 @@ from unfold.admin import ModelAdmin
 
 @admin.register(ExpenseAuditLog)
 class ExpenseAuditLogAdmin(ModelAdmin):
-    list_display = ['expense', 'user', 'action', 'timestamp', 'ip_address']
+    list_display = ['expense_title', 'user', 'action', 'timestamp', 'ip_address']
     list_filter = ['action', 'timestamp', 'user']
-    search_fields = ['expense__title', 'user__email']
-    readonly_fields = ['expense', 'user', 'action', 'changes', 'timestamp', 'ip_address']
+    search_fields = ['expense_title', 'user__email']
+    readonly_fields = ['expense_id', 'expense_title', 'user', 'action', 'changes', 'timestamp', 'ip_address']
     
     def has_add_permission(self, request):
         return False

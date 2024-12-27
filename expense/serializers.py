@@ -10,34 +10,32 @@ class ExpenseCategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ExpenseAuditLogSerializer(serializers.ModelSerializer):
-    expense_title = serializers.CharField(source='expense.title', read_only=True)
-    expense_amount = serializers.DecimalField(
-        source='expense.amount',
-        max_digits=10,
-        decimal_places=2,
-        read_only=True
-    )
     action_display = serializers.CharField(source='get_action_display', read_only=True)
     
     class Meta:
         model = ExpenseAuditLog
         fields = [
-            'id', 'expense', 'expense_title', 'expense_amount','action', 'action_display', 'changes',
-            'timestamp', 'ip_address'
+            'id', 'expense_id', 'expense_title', 'action', 
+            'action_display', 'changes', 'timestamp', 'ip_address'
         ]
         read_only_fields = fields
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        # Format the changes to be more readable
         if data['changes']:
             formatted_changes = []
             for field, change in data['changes'].items():
-                formatted_changes.append({
-                    'field': field,
-                    'old_value': change['old'],
-                    'new_value': change['new']
-                })
+                if isinstance(change, dict) and 'old' in change and 'new' in change:
+                    formatted_changes.append({
+                        'field': field,
+                        'old_value': change['old'],
+                        'new_value': change['new']
+                    })
+                else:
+                    formatted_changes.append({
+                        'field': field,
+                        'value': change
+                    })
             data['changes'] = formatted_changes
         return data
 

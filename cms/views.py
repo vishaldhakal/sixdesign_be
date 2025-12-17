@@ -8,8 +8,9 @@ from .serializers import (
 )
 import json
 import os
-from django.http import HttpResponse
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
 from django.conf import settings
 import requests
 
@@ -149,7 +150,7 @@ class BlogListCreateView(generics.ListCreateAPIView):
         if tags:
             try:
                 tags = json.loads(tags)
-            except:
+            except (json.JSONDecodeError, ValueError, TypeError):
                 tags = []
 
         # Handle thumbnail
@@ -177,7 +178,7 @@ class BlogRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         if tags:
             try:
                 tags = json.loads(tags)
-            except:
+            except (json.JSONDecodeError, ValueError, TypeError):
                 tags = []
 
         # Handle thumbnail
@@ -206,9 +207,24 @@ def ContactFormSubmission(request):
         phone = request.data.get("phone")
         message = request.data.get("message")
 
+        missing_fields = [field for field, value in {
+            "name": name,
+            "email": email,
+            "phone": phone,
+            "message": message,
+        }.items() if not value]
+        if missing_fields:
+            return Response(
+                {"error": f"Missing required fields: {', '.join(missing_fields)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         api_key = getattr(settings, "EMAIL_HOST_PASSWORD", "") or os.getenv("RESEND_APIKEY", "")
         if not api_key:
-            return HttpResponse("Missing RESEND_APIKEY", status=500)
+            return Response(
+                {"error": "Missing RESEND_APIKEY"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         subject = "Inquiry - SixDesign"
         sender = "SixDesign <info@sixdesign.ca>"
@@ -240,9 +256,22 @@ def ContactFormSubmission(request):
                 timeout=10,
             )
             if resp.ok:
-                return HttpResponse("Success")
-            return HttpResponse(f"Failed to send: {resp.text}", status=resp.status_code)
-        except requests.RequestException as exc:
-            return HttpResponse(f"Failed to send: {exc}", status=500)
+                return Response({"message": "Success"}, status=status.HTTP_200_OK)
 
-    return HttpResponse("Not a POST request")
+            error_body = None
+            try:
+                error_body = resp.json()
+            except ValueError:
+                error_body = resp.text
+
+            return Response(
+                {"error": "Failed to send", "details": error_body},
+                status=resp.status_code,
+            )
+        except requests.RequestException as exc:
+            return Response(
+                {"error": "Failed to send", "details": str(exc)},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+    return Response({"error": "Not a POST request"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

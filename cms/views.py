@@ -253,7 +253,7 @@ def ContactFormSubmission(request):
                     "Content-Type": "application/json",
                 },
                 json=payload,
-                timeout=10,
+                timeout=(5, 10),  # connect, read
             )
             if resp.ok:
                 return Response({"message": "Success"}, status=status.HTTP_200_OK)
@@ -268,10 +268,20 @@ def ContactFormSubmission(request):
                 {"error": "Failed to send", "details": error_body},
                 status=resp.status_code,
             )
+        except requests.Timeout:
+            return Response(
+                {"error": "Failed to send", "details": "Resend request timed out"},
+                status=status.HTTP_504_GATEWAY_TIMEOUT,
+            )
         except requests.RequestException as exc:
             return Response(
                 {"error": "Failed to send", "details": str(exc)},
                 status=status.HTTP_502_BAD_GATEWAY,
+            )
+        except Exception as exc:
+            return Response(
+                {"error": "Unexpected failure", "details": str(exc)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     return Response({"error": "Not a POST request"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

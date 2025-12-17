@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .models import Category, Tag, Service, Portfolio, Blog, Testimonial
@@ -8,9 +7,11 @@ from .serializers import (
     BlogListSerializer, BlogDetailSerializer, TestimonialSerializer
 )
 import json
+import os
 from django.http import HttpResponse
-from django.core.mail import EmailMessage
 from rest_framework.decorators import api_view
+from django.conf import settings
+import requests
 
 # Create your views here.
 
@@ -200,21 +201,48 @@ class TestimonialRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
 @api_view(["POST"])
 def ContactFormSubmission(request):
     if request.method == "POST":
+        name = request.data.get("name")
+        email = request.data.get("email")
+        phone = request.data.get("phone")
+        message = request.data.get("message")
+
+        api_key = getattr(settings, "EMAIL_HOST_PASSWORD", "") or os.getenv("RESEND_APIKEY", "")
+        if not api_key:
+            return HttpResponse("Missing RESEND_APIKEY", status=500)
+
         subject = "Inquiry - SixDesign"
-        emaill = "SixDesign <info@sixdesign.ca>"
-        headers = {'Reply-To': request.POST["email"]}
+        sender = "SixDesign <info@sixdesign.ca>"
+        recipient = "team@sixdesign.ca"
 
-        name = request.POST["name"]
-        email = request.POST["email"]
-        phone = request.POST["phone"]
-        message = request.POST["message"]
+        html_body = f"""
+            <p><strong>Name:</strong> {name}</p>
+            <p><strong>Email:</strong> {email}</p>
+            <p><strong>Phone:</strong> {phone}</p>
+            <p><strong>Message:</strong><br>{message}</p>
+        """
 
-        body = f"Name: {name}\nEmail: {email}\nPhone: {phone}\nMessage: {message}\n"
+        payload = {
+            "from": sender,
+            "to": [recipient],
+            "subject": subject,
+            "html": html_body,
+            "reply_to": [email] if email else []
+        }
 
-        email = EmailMessage(subject, body, emaill, ["team@sixdesign.ca"],reply_to=[email], headers=headers)
+        try:
+            resp = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+                timeout=10,
+            )
+            if resp.ok:
+                return HttpResponse("Success")
+            return HttpResponse(f"Failed to send: {resp.text}", status=resp.status_code)
+        except requests.RequestException as exc:
+            return HttpResponse(f"Failed to send: {exc}", status=500)
 
-        email.send(fail_silently=False)
-        
-        return HttpResponse("Success")
-    else:
-        return HttpResponse("Not a POST request")
+    return HttpResponse("Not a POST request")

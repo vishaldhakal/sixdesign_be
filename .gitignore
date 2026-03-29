@@ -23,3 +23,5 @@ ENV/
 # IDE specific files
 .vscode/
 .idea/
+/media/
+media/

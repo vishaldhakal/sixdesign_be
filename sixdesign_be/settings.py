@@ -36,23 +36,23 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
-    'accounts',
+    'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
+    'django_filters',
     'tinymce',
+    'accounts',
     'projects',
     'expense',
     'cms',
-    'corsheaders',
-    'rest_framework_simplejwt.token_blacklist',
     'outreach',
-    'django_filters',
-    'activity'
 ]
 
 MIDDLEWARE = [
+    # CorsMiddleware must be first so it sets CORS headers before any response
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -83,14 +83,14 @@ WSGI_APPLICATION = 'sixdesign_be.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }  
-
 DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}  
+
+""" DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'sixdesign',
@@ -99,7 +99,7 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '5432',
     }
-}
+} """
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -149,7 +149,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'accounts.User'
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -230,5 +230,3 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'resend'
 EMAIL_HOST_PASSWORD = os.getenv("RESEND_APIKEY", default="")
 
-
-SITE_URL = 'https://admin.sixdesign.ca'

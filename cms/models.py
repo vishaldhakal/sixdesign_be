@@ -7,6 +7,7 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = "Categories"
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -15,6 +16,9 @@ class Category(models.Model):
 class Tag(models.Model):
     name = models.CharField(max_length=255)
 
+    class Meta:
+        ordering = ['name']
+
     def __str__(self):
         return self.name
 
@@ -22,6 +26,9 @@ class Tag(models.Model):
 class Service(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -34,10 +41,17 @@ class Portfolio(models.Model):
     thumbnail = models.FileField(blank=True, null=True)
     link = models.URLField(blank=True, null=True)
     tags = models.ManyToManyField(Tag, blank=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='portfolios')
     services = models.ManyToManyField(Service, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            # category-scoped list sorted by newest; slug is already indexed (unique=True)
+            models.Index(fields=['category', 'created_at'], name='portfolio_category_created_idx'),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -55,9 +69,16 @@ class Blog(models.Model):
     thumbnail = models.FileField(blank=True, null=True)
     content = models.TextField(blank=True, null=True)
     tags = models.ManyToManyField(Tag, blank=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='blogs')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            # category-scoped blog list; slug already indexed via unique=True
+            models.Index(fields=['category', 'created_at'], name='blog_category_created_idx'),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -77,6 +98,12 @@ class Testimonial(models.Model):
     rating = models.IntegerField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-rating', '-created_at']
+        indexes = [
+            models.Index(fields=['rating'], name='testimonial_rating_idx'),
+        ]
 
     def __str__(self):
         return self.name
